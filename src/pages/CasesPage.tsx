@@ -58,10 +58,11 @@ export function CasesPage() {
 
   // Derived stats
   const stats = useMemo(() => {
-    const active     = cases.filter((c) => c.status === 'active').length;
-    const processing = cases.filter((c) => c.status === 'processing').length;
-    const critical   = cases.filter((c) => c.status === 'critical').length;
-    return { total: cases.length, active, processing, critical };
+    const active       = cases.filter((c) => c.status === 'active').length;
+    const processing   = cases.filter((c) => c.status === 'processing').length;
+    const critical     = cases.filter((c) => c.status === 'critical').length;
+    const highPriority = cases.filter((c) => c.priority === 'high').length;
+    return { total: cases.length, active, processing, critical, highPriority };
   }, [cases]);
 
   // Filtered + searched cases
@@ -90,6 +91,8 @@ export function CasesPage() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'active',
+      priority: payload.priority ?? 'medium',
+      incidentAt: payload.incidentAt,
     };
     setCases((prev) => [newCase, ...prev]);
     navigate(`/case/${newCase.id}`);
@@ -124,6 +127,9 @@ export function CasesPage() {
           )}
           {stats.critical > 0 && (
             <StatPill label="Critical" value={stats.critical} highlight="red" />
+          )}
+          {stats.highPriority > 0 && (
+            <StatPill label="High Priority" value={stats.highPriority} highlight="red" />
           )}
         </div>
       </div>

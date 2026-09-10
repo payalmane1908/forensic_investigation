@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Shield, ChevronDown, User } from 'lucide-react';
 
-type NavSection = 'cases' | 'evidence' | 'investigate' | 'reports';
+type NavSection = 'dashboard' | 'cases' | 'evidence' | 'investigate' | 'reports';
 
 interface TopNavProps {
   activeSection?: NavSection;
@@ -10,6 +10,7 @@ interface TopNavProps {
 }
 
 const NAV_ITEMS: { id: NavSection; label: string }[] = [
+  { id: 'dashboard',   label: 'Dashboard' },
   { id: 'cases',       label: 'Cases' },
   { id: 'evidence',    label: 'Evidence' },
   { id: 'investigate', label: 'Investigate' },
@@ -17,7 +18,7 @@ const NAV_ITEMS: { id: NavSection; label: string }[] = [
 ];
 
 export function TopNav({
-  activeSection = 'cases',
+  activeSection = 'dashboard',
   onNavigate,
   investigatorName = 'Insp. R. Sharma',
 }: TopNavProps) {

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Camera, FolderOpen, Clock, ChevronRight } from 'lucide-react';
-import type { Case } from '../../types/case';
+import { Camera, FolderOpen, Clock, ChevronRight, AlertTriangle } from 'lucide-react';
+import type { Case, CasePriority } from '../../types/case';
 import { Badge, MonoLabel } from '../ui/primitives';
-import { formatRelativeTime } from '../../utils/format';
+import { formatRelativeTime, formatDate } from '../../utils/format';
 
 interface CaseCardProps {
   caseData: Case;
@@ -10,8 +10,28 @@ interface CaseCardProps {
   view?: 'list' | 'grid';
 }
 
+// Priority indicator — compact dot + label using design-system tokens
+function PriorityPip({ priority }: { priority: CasePriority }) {
+  const cfg: Record<CasePriority, { dot: string; text: string; label: string }> = {
+    high:   { dot: 'bg-red',   text: 'text-red',   label: 'High' },
+    medium: { dot: 'bg-amber', text: 'text-amber',  label: 'Med' },
+    low:    { dot: 'bg-text-tertiary', text: 'text-text-tertiary', label: 'Low' },
+  };
+  const c = cfg[priority];
+  return (
+    <span className={`inline-flex items-center gap-1 text-2xs font-mono uppercase tracking-wide ${c.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.dot}`} />
+      {c.label}
+    </span>
+  );
+}
+
 export function CaseCard({ caseData, onClick, view = 'list' }: CaseCardProps) {
   const [hovered, setHovered] = useState(false);
+
+  const incidentLine = caseData.incidentAt
+    ? `Incident: ${formatDate(caseData.incidentAt)}`
+    : null;
 
   if (view === 'grid') {
     return (
@@ -37,9 +57,12 @@ export function CaseCard({ caseData, onClick, view = 'list' }: CaseCardProps) {
           `}
         />
 
-        {/* Top row */}
+        {/* Top row: ID + status + priority */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          <MonoLabel>{caseData.id}</MonoLabel>
+          <div className="flex items-center gap-2">
+            <MonoLabel>{caseData.id}</MonoLabel>
+            <PriorityPip priority={caseData.priority} />
+          </div>
           <Badge variant={caseData.status} />
         </div>
 
@@ -47,6 +70,14 @@ export function CaseCard({ caseData, onClick, view = 'list' }: CaseCardProps) {
         <h3 className="text-sm font-medium text-text-primary mb-1 leading-snug line-clamp-2">
           {caseData.title}
         </h3>
+
+        {/* Incident line */}
+        {incidentLine && (
+          <p className="flex items-center gap-1 text-2xs text-text-tertiary mb-2">
+            <AlertTriangle size={10} className="shrink-0" />
+            {incidentLine}
+          </p>
+        )}
 
         {/* Description */}
         <p className="text-xs text-text-tertiary leading-relaxed mb-4 line-clamp-2">
@@ -109,15 +140,22 @@ export function CaseCard({ caseData, onClick, view = 'list' }: CaseCardProps) {
       />
 
       <div className="flex items-center gap-5">
-        {/* ID + Title */}
+        {/* ID + Title + incident */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-3 mb-1">
             <MonoLabel className="shrink-0">{caseData.id}</MonoLabel>
             <Badge variant={caseData.status} />
+            <PriorityPip priority={caseData.priority} />
           </div>
           <h3 className="text-sm font-medium text-text-primary truncate">
             {caseData.title}
           </h3>
+          {incidentLine && (
+            <p className="flex items-center gap-1 text-2xs text-text-tertiary mt-0.5">
+              <AlertTriangle size={10} className="shrink-0" />
+              {incidentLine}
+            </p>
+          )}
         </div>
 
         {/* Meta columns */}

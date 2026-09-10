@@ -11,24 +11,30 @@ export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
 
   // Derive active nav section from current path
-  const activeSection = location.pathname.startsWith('/evidence')
-    ? 'evidence'
-    : location.pathname.startsWith('/investigate')
-    ? 'investigate'
-    : location.pathname.startsWith('/reports')
-    ? 'reports'
-    : 'cases';
+  const activeSection =
+    location.pathname === '/' || location.pathname === '/dashboard'
+      ? 'dashboard'
+      : location.pathname.startsWith('/cases') || location.pathname.startsWith('/case')
+      ? 'cases'
+      : location.pathname.startsWith('/evidence')
+      ? 'evidence'
+      : location.pathname.startsWith('/investigate')
+      ? 'investigate'
+      : location.pathname.startsWith('/reports')
+      ? 'reports'
+      : 'dashboard';
 
-  const handleNavigate = (section: string) => {
-    if (section === 'cases') navigate('/');
+  const handleNavigate = (section: 'dashboard' | 'cases' | 'evidence' | 'investigate' | 'reports') => {
+    if (section === 'dashboard') navigate('/dashboard');
+    else if (section === 'cases') navigate('/cases');
     else navigate(`/${section}`);
   };
 
   return (
     <div className="min-h-screen bg-surface-base text-text-primary">
       <TopNav
-        activeSection={activeSection as 'cases' | 'evidence' | 'investigate' | 'reports'}
-        onNavigate={handleNavigate as (s: 'cases' | 'evidence' | 'investigate' | 'reports') => void}
+        activeSection={activeSection}
+        onNavigate={handleNavigate}
       />
       {children}
     </div>

@@ -12,6 +12,8 @@ export const MOCK_CASES: Case[] = [
     createdAt: '2026-09-06T21:14:00+05:30',
     updatedAt: '2026-09-08T11:58:00+05:30',
     status: 'active',
+    priority: 'high',
+    incidentAt: '2026-09-06T21:14:00+05:30',
   },
   {
     id: 'CASE-023',
@@ -24,6 +26,8 @@ export const MOCK_CASES: Case[] = [
     createdAt: '2026-09-04T08:30:00+05:30',
     updatedAt: '2026-09-08T09:22:00+05:30',
     status: 'processing',
+    priority: 'high',
+    incidentAt: '2026-09-03T23:45:00+05:30',
   },
   {
     id: 'CASE-021',
@@ -36,6 +40,8 @@ export const MOCK_CASES: Case[] = [
     createdAt: '2026-08-29T14:00:00+05:30',
     updatedAt: '2026-09-07T17:45:00+05:30',
     status: 'closed',
+    priority: 'medium',
+    incidentAt: '2026-08-28T11:30:00+05:30',
   },
   {
     id: 'CASE-019',
@@ -48,6 +54,8 @@ export const MOCK_CASES: Case[] = [
     createdAt: '2026-08-21T09:15:00+05:30',
     updatedAt: '2026-09-06T20:10:00+05:30',
     status: 'critical',
+    priority: 'high',
+    incidentAt: '2026-08-20T16:00:00+05:30',
   },
   {
     id: 'CASE-017',
@@ -60,5 +68,7 @@ export const MOCK_CASES: Case[] = [
     createdAt: '2026-08-15T16:30:00+05:30',
     updatedAt: '2026-09-02T11:00:00+05:30',
     status: 'closed',
+    priority: 'medium',
+    incidentAt: '2026-08-14T14:15:00+05:30',
   },
 ];

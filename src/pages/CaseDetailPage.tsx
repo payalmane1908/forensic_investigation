@@ -14,19 +14,29 @@ import {
   Shield,
   ChevronRight,
   Sliders,
+  Award,
+  ExternalLink,
+  AlertTriangle,
+  Radio,
+  HardDrive,
 } from 'lucide-react';
 import { Badge, Button, MonoLabel } from '../components/ui/primitives';
 import { EvidenceIngestion } from '../components/evidence/EvidenceIngestion';
 import { ParserTab } from '../components/parser/ParserTab';
+import { InvestigationManager } from '../components/investigation/InvestigationManager';
+import { AcquisitionWizard } from '../components/acquisition/AcquisitionWizard';
+import { RecoveryTab } from '../components/recovery/RecoveryTab';
 import { MOCK_CASES } from '../data/mockCases';
 import { MOCK_EVIDENCE } from '../data/mockEvidence';
+import { MOCK_INVESTIGATIONS } from '../data/mockInvestigation';
 import type { Case } from '../types/case';
 import type { EvidenceItem } from '../types/evidence';
+import type { Investigation } from '../types/investigation';
 import { formatDate, formatRelativeTime, formatDateTime } from '../utils/format';
 
 // ─── Tab definition ───────────────────────────────────────────────────────────
 
-type TabId = 'overview' | 'evidence' | 'parser' | 'investigate' | 'reports';
+type TabId = 'overview' | 'acquisition' | 'evidence' | 'recovery' | 'parser' | 'investigate' | 'reports';
 
 interface Tab {
   id: TabId;
@@ -50,10 +60,13 @@ export function CaseDetailPage() {
   const [evidence, setEvidence] = useState<EvidenceItem[]>(
     MOCK_EVIDENCE.filter((e) => e.caseId === caseId)
   );
+  const [investigations, setInvestigations] = useState<Investigation[]>(() =>
+    MOCK_INVESTIGATIONS.filter((inv) => inv.caseId === caseId)
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as TabId | null;
   const [activeTab, setActiveTab] = useState<TabId>(
-    tabParam === 'parser' || tabParam === 'overview' || tabParam === 'evidence'
+    tabParam && ['overview', 'acquisition', 'evidence', 'recovery', 'parser', 'investigate', 'reports'].includes(tabParam)
       ? tabParam
       : 'evidence'
   );
@@ -77,10 +90,21 @@ export function CaseDetailPage() {
         icon: <FileText size={14} />,
       },
       {
+        id: 'acquisition',
+        label: 'Acquisition',
+        icon: <Radio size={14} />,
+      },
+      {
         id: 'evidence',
         label: 'Evidence',
         icon: <FolderOpen size={14} />,
         badge: evidence.length,
+      },
+      {
+        id: 'recovery',
+        label: 'Recovery',
+        icon: <HardDrive size={14} />,
+        badge: 3,
       },
       {
         id: 'parser',
@@ -92,16 +116,15 @@ export function CaseDetailPage() {
         id: 'investigate',
         label: 'Investigate',
         icon: <Search size={14} />,
-        comingSoon: true,
+        badge: investigations.length > 0 ? investigations.length : undefined,
       },
       {
         id: 'reports',
         label: 'Reports',
         icon: <GitBranch size={14} />,
-        comingSoon: true,
       },
     ],
-    [evidence.length]
+    [evidence.length, investigations.length]
   );
 
   const handleEvidenceAdded = (items: EvidenceItem[]) => {
@@ -156,6 +179,16 @@ export function CaseDetailPage() {
       {/* ── Tab content ── */}
       <div className="animate-fade-in">
         {activeTab === 'overview' && <OverviewTab caseData={caseData} evidence={evidence} />}
+        {activeTab === 'acquisition' && (
+          <AcquisitionWizard
+            caseId={caseData.id}
+            investigator={caseData.investigator}
+            investigations={investigations}
+            onEvidenceAdded={handleEvidenceAdded}
+            onNavigateToInvestigate={() => handleTabChange('investigate')}
+            onNavigateToEvidence={() => handleTabChange('evidence')}
+          />
+        )}
         {activeTab === 'evidence' && (
           <EvidenceIngestion
             caseId={caseData.id}
@@ -163,9 +196,26 @@ export function CaseDetailPage() {
             onEvidenceAdded={handleEvidenceAdded}
           />
         )}
+        {activeTab === 'recovery' && (
+          <RecoveryTab
+            caseId={caseData.id}
+            investigator={caseData.investigator}
+            onEvidenceAdded={(item) => handleEvidenceAdded([item])}
+            onNavigateToEvidence={() => handleTabChange('evidence')}
+          />
+        )}
         {activeTab === 'parser' && <ParserTab caseId={caseData.id} />}
-        {activeTab === 'investigate' && <ComingSoonTab label="Investigate" />}
-        {activeTab === 'reports' && <ComingSoonTab label="Reports" />}
+        {activeTab === 'investigate' && (
+          <InvestigationManager
+            caseId={caseData.id}
+            investigator={caseData.investigator}
+            investigations={investigations}
+            onInvestigationsChange={setInvestigations}
+          />
+        )}
+        {activeTab === 'reports' && (
+          <CaseReportsTab caseData={caseData} evidence={evidence} />
+        )}
       </div>
     </div>
   );
@@ -180,13 +230,24 @@ function CaseHeader({
   caseData: Case;
   evidenceCount: number;
 }) {
+  const priorityConfig = {
+    high:   { label: 'High Priority',   dot: 'bg-red',            text: 'text-red' },
+    medium: { label: 'Med Priority',    dot: 'bg-amber',           text: 'text-amber' },
+    low:    { label: 'Low Priority',    dot: 'bg-text-tertiary',   text: 'text-text-tertiary' },
+  };
+  const pCfg = priorityConfig[caseData.priority ?? 'medium'];
+
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="flex-1 min-w-0">
-        {/* ID + Status */}
+        {/* ID + Status + Priority */}
         <div className="flex items-center gap-3 mb-2">
           <MonoLabel className="text-lg text-text-primary">{caseData.id}</MonoLabel>
           <Badge variant={caseData.status} />
+          <span className={`inline-flex items-center gap-1 text-2xs font-mono uppercase tracking-wide ${pCfg.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${pCfg.dot}`} />
+            {pCfg.label}
+          </span>
         </div>
 
         {/* Title */}
@@ -216,6 +277,12 @@ function CaseHeader({
             <Clock size={12} className="text-text-tertiary" />
             Updated {formatRelativeTime(caseData.updatedAt)}
           </span>
+          {caseData.incidentAt && (
+            <span className="flex items-center gap-1.5 text-amber">
+              <AlertTriangle size={12} className="shrink-0" />
+              Incident: {formatDateTime(caseData.incidentAt)}
+            </span>
+          )}
         </div>
       </div>
 
@@ -355,6 +422,13 @@ function OverviewTab({
             Case Timeline
           </h3>
           <div className="space-y-3">
+            {caseData.incidentAt && (
+              <TimelineItem
+                label="Incident Time"
+                value={formatDateTime(caseData.incidentAt)}
+                highlight
+              />
+            )}
             <TimelineItem
               label="Case Created"
               value={formatDateTime(caseData.createdAt)}
@@ -394,31 +468,77 @@ function StatCard({
   );
 }
 
-function TimelineItem({ label, value }: { label: string; value: string }) {
+function TimelineItem({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div>
       <p className="text-2xs text-text-tertiary uppercase tracking-wider">{label}</p>
-      <p className="text-xs text-text-secondary mt-0.5">{value}</p>
+      <p className={`text-xs mt-0.5 ${highlight ? 'text-amber' : 'text-text-secondary'}`}>{value}</p>
     </div>
   );
 }
 
-// ─── Coming Soon Tab ──────────────────────────────────────────────────────────
+// ─── Case Reports Tab ──────────────────────────────────────────────────────────
 
-function ComingSoonTab({ label }: { label: string }) {
+function CaseReportsTab({
+  caseData,
+  evidence,
+}: {
+  caseData: Case;
+  evidence: EvidenceItem[];
+}) {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex flex-col items-center justify-center py-24 gap-4">
-      <div className="w-14 h-14 rounded-xl bg-surface-01 border border-border-subtle flex items-center justify-center">
-        <Shield size={22} className="text-text-tertiary" />
+    <div className="space-y-6">
+      <div className="bg-surface-01 border border-border-subtle rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <Award size={18} className="text-accent" />
+            <span className="text-xs font-mono uppercase tracking-wider text-text-tertiary">
+              Court Evidence Admissibility
+            </span>
+          </div>
+          <h3 className="text-lg font-bold text-text-primary">
+            Section 65B Certificate & Evidence Dossier
+          </h3>
+          <p className="text-xs text-text-secondary mt-1 max-w-xl">
+            Generate legally binding certificates compliant with Section 65B of Indian Evidence Act / Section 63 BSA, certifying hash integrity and tamper-proof chain of custody for {caseData.id}.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <Button
+            variant="primary"
+            icon={<ExternalLink size={14} />}
+            onClick={() => navigate('/reports')}
+          >
+            Open Legal Reports Center
+          </Button>
+        </div>
       </div>
-      <div className="text-center">
-        <p className="text-sm font-medium text-text-secondary mb-1">
-          {label} module coming soon
-        </p>
-        <p className="text-xs text-text-tertiary max-w-xs">
-          This capability will be available in a future build of FORENSIC-X.
-        </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 rounded-xl bg-surface-01 border border-border-subtle">
+          <span className="text-3xs font-mono uppercase text-text-tertiary block">VERIFIED EXHIBITS</span>
+          <p className="text-2xl font-bold font-mono text-green mt-1">
+            {evidence.filter((e) => e.status === 'verified' || e.status === 'ingested').length} / {evidence.length}
+          </p>
+          <p className="text-2xs text-text-secondary mt-1">Cryptographic hashes matched</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-surface-01 border border-border-subtle">
+          <span className="text-3xs font-mono uppercase text-text-tertiary block">INVESTIGATING OFFICER</span>
+          <p className="text-sm font-bold text-text-primary mt-1">{caseData.investigator}</p>
+          <p className="text-2xs text-text-secondary mt-1">Certifying signatory officer</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-surface-01 border border-border-subtle">
+          <span className="text-3xs font-mono uppercase text-text-tertiary block">LEGAL COMPLIANCE</span>
+          <p className="text-sm font-bold text-accent mt-1">ISO/IEC 27037:2012</p>
+          <p className="text-2xs text-text-secondary mt-1">Digital evidence handling certified</p>
+        </div>
       </div>
     </div>
   );
 }
+

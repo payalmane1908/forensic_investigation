@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PlusCircle, AlertCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button, Input, Textarea, Separator } from '../ui/primitives';
-import type { CreateCasePayload } from '../../types/case';
+import type { CreateCasePayload, CasePriority } from '../../types/case';
 import { generateCaseId } from '../../utils/format';
 
 interface CreateCaseModalProps {
@@ -17,6 +17,8 @@ interface FormState {
   id: string;
   description: string;
   investigator: string;
+  priority: CasePriority;
+  incidentAt: string;
 }
 
 interface FormErrors {
@@ -30,7 +32,15 @@ const INITIAL_STATE: FormState = {
   id: '',
   description: '',
   investigator: '',
+  priority: 'medium',
+  incidentAt: '',
 };
+
+const PRIORITY_OPTIONS: { value: CasePriority; label: string }[] = [
+  { value: 'high',   label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low',    label: 'Low' },
+];
 
 export function CreateCaseModal({
   open,
@@ -64,7 +74,7 @@ export function CreateCaseModal({
 
   const handleChange =
     (field: keyof FormState) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
       if (errors[field as keyof FormErrors]) {
         setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -81,6 +91,8 @@ export function CreateCaseModal({
       title: form.title.trim(),
       description: form.description.trim(),
       investigator: form.investigator.trim(),
+      priority: form.priority,
+      incidentAt: form.incidentAt || undefined,
     });
     setSubmitting(false);
     onClose();
@@ -90,7 +102,7 @@ export function CreateCaseModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="New Investigation"
+      title="Register New Case"
       subtitle="All fields marked with an asterisk are required."
       width="max-w-lg"
       footer={
@@ -104,7 +116,7 @@ export function CreateCaseModal({
             loading={submitting}
             icon={<PlusCircle size={15} />}
           >
-            {submitting ? 'Creating…' : 'Create Investigation'}
+            {submitting ? 'Creating…' : 'Create Case'}
           </Button>
         </>
       }
@@ -144,6 +156,49 @@ export function CreateCaseModal({
           onChange={handleChange('investigator')}
           error={errors.investigator}
         />
+
+        {/* Priority + Incident date row */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Priority dropdown */}
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="case-priority"
+              className="text-xs font-medium text-text-secondary uppercase tracking-wider"
+            >
+              Priority
+            </label>
+            <select
+              id="case-priority"
+              value={form.priority}
+              onChange={handleChange('priority')}
+              className="w-full h-10 rounded-md border text-sm transition-colors duration-150 bg-surface-03 border-border-subtle text-text-primary px-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 cursor-pointer"
+            >
+              {PRIORITY_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-surface-03">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Incident date/time */}
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="case-incident-at"
+              className="text-xs font-medium text-text-secondary uppercase tracking-wider"
+            >
+              Incident Date/Time
+            </label>
+            <input
+              id="case-incident-at"
+              type="datetime-local"
+              value={form.incidentAt}
+              onChange={handleChange('incidentAt')}
+              className="w-full h-10 rounded-md border text-sm transition-colors duration-150 bg-surface-03 border-border-subtle text-text-primary px-3 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
+            />
+            <p className="text-xs text-text-tertiary">Optional</p>
+          </div>
+        </div>
 
         {/* Description */}
         <Textarea

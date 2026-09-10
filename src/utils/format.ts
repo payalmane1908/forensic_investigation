@@ -50,6 +50,8 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+export const formatBytes = formatFileSize;
+
 // Format seconds to HH:MM:SS
 export function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
